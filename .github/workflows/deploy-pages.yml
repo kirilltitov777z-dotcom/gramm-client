@@ -1,8 +1,8 @@
 name: 🚀 Deploy to GitHub Pages
 
+# Сначала включи Pages вручную: Settings → Pages → Source: GitHub Actions.
+# После этого можно вернуть триггер push: branches: [main] для авто-деплоя.
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:

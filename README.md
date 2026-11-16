@@ -60,7 +60,7 @@ npm run dev
    git remote add origin https://github.com/<твой-логин>/gramm-client.git
    git push -u origin main
    ```
-2. В настройках репозитория: **Settings → Pages → Source: GitHub Actions**.
+2. В настройках репозитория: **Settings → Pages → Source: GitHub Actions** (включается вручную — API-токену это не всегда доступно). После включения можно вернуть в `deploy-pages.yml` триггер `push` для авто-деплоя.
 3. Воркфлоу сами соберут:
    - `build.yml` — при каждом push/PR;
    - `deploy-pages.yml` — веб-версия на Pages;
