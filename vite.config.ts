@@ -16,7 +16,6 @@ export default defineConfig({
   ],
   define: {
     global: 'globalThis',
-    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV ?? 'production'),
   },
   build: {
     target: 'es2020',

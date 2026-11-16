@@ -4,7 +4,7 @@
  * и фирменные фишки (профиль-баннер через маркер в bio + реестр на GitHub).
  */
 import { Api, TelegramClient } from 'telegram';
-import { Session } from 'telegram/session';
+import { StringSession } from 'telegram/sessions';
 import { NewMessage } from 'telegram/events';
 import { DEFAULT_CREDENTIALS } from '../config';
 import type { ChatItem, MessageItem, ProfileBanner, ProxyNode } from './types';
@@ -44,7 +44,7 @@ export function decodeBannerMarker(bio: string | undefined): { id?: string; url?
 
 class GrammClient {
   private client?: TelegramClient;
-  private session?: Session;
+  private session?: StringSession;
   private proxy?: ProxyNode;
   private messageListeners = new Set<(m: MessageItem) => void>();
   private resolvers: { code?: Resolver; password?: Resolver } = {};
@@ -55,15 +55,14 @@ class GrammClient {
     return !!this.client?.connected;
   }
   get authorized(): boolean {
-    return !!this.client && this.client.connected;
+    return !!this.client?.connected;
   }
 
   /** Создаёт клиент с выбранным прокси. */
   async init(proxy?: ProxyNode): Promise<void> {
     this.proxy = proxy;
     const saved = loadSessionString();
-    this.session = new Session();
-    if (saved) this.session.setString(saved);
+    this.session = new StringSession(saved ?? undefined);
 
     const params: Record<string, unknown> = {
       connectionRetries: 4,
@@ -73,7 +72,7 @@ class GrammClient {
       timeout: 15,
     };
     if (proxy) {
-      params.proxy = { host: proxy.host, port: proxy.port, secret: proxy.secret ?? '' };
+      params.proxy = { ip: proxy.host, port: proxy.port, secret: proxy.secret ?? '', MTProxy: true };
     }
 
     this.client = new TelegramClient(this.session, DEFAULT_CREDENTIALS.apiId, DEFAULT_CREDENTIALS.apiHash, params);
@@ -141,7 +140,7 @@ class GrammClient {
 
   private persistSession() {
     try {
-      const s = this.session?.stringify();
+      const s = this.session?.save();
       if (s) saveSessionString(s);
     } catch { /* noop */ }
   }
@@ -167,7 +166,7 @@ class GrammClient {
       const dialogs = await this.client.getDialogs({ limit });
       const out: ChatItem[] = [];
       for (const d of dialogs) {
-        const entity = (d as { entity?: Api.TypeEntity }).entity;
+        const entity = (d as unknown as { entity?: { id?: number; className?: string; megagroup?: boolean; broadcast?: boolean; verified?: boolean; username?: string } }).entity;
         if (!entity || !('id' in entity)) continue;
         const id = String((entity as { id: number }).id);
         const last = (d as { message?: Api.Message }).message;

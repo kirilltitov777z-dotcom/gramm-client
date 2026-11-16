@@ -6,7 +6,7 @@
  * самый быстрый живой узел. Если ничего не помогло — прямой доступ.
  */
 import { TelegramClient } from 'telegram';
-import { Session } from 'telegram/session';
+import { StringSession } from 'telegram/sessions';
 import type { ProxyNode, ProxyReport, ProxySource, TelegramCredentials } from './types';
 
 export const DEFAULT_SOURCES: ProxySource[] = [
@@ -137,11 +137,11 @@ export async function verifyProxy(
 ): Promise<boolean> {
   let client: TelegramClient | undefined;
   try {
-    client = new TelegramClient(new Session(), creds.apiId, creds.apiHash, {
+    client = new TelegramClient(new StringSession(), creds.apiId, creds.apiHash, {
       connectionRetries: 1,
       useWSS: proxy.port === 443,
-      proxy: { host: proxy.host, port: proxy.port, secret: proxy.secret ?? '' },
-      // @ts-expect-error дополнительные опции conexión безопасно игнорируются
+      proxy: { ip: proxy.host, port: proxy.port, secret: proxy.secret ?? '', MTProxy: true },
+      // @ts-ignore дополнительные опции безопасно игнорируются
       autoReconnect: false,
     });
     const start = Date.now();

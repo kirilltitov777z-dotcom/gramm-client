@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { Settings2, ImagePlus, Check, X, Sparkles } from 'lucide-react';
 import { useApp } from '../store/appStore';
 import { telegram, decodeBannerMarker, encodeBannerMarker } from '../telegram/client';
@@ -38,7 +38,7 @@ export default function ProfileView() {
     }
   }, [bannerModalOpen, banner]);
 
-  function pickFile(e: React.ChangeEvent<HTMLInputElement>) {
+  function pickFile(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
