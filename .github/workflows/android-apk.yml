@@ -1,0 +1,67 @@
+name: 📱 Build Android APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      release:
+        description: 'Создать GitHub Release с APK'
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: 📦 Install deps
+        run: npm install --no-audit --no-fund
+
+      - name: 🏗 Build web
+        run: npm run build
+
+      - name: ⚡ Capacitor sync
+        run: |
+          npx cap add android || true
+          npx cap sync android
+
+      - name: 🤖 Gradle assemble (debug APK)
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: 📤 Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: gramm-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+
+      - name: 🏷 Create release
+        if: ${{ inputs.release }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.0-${{ github.run_number }}
+          name: ГРАММ v1.0.0 (build ${{ github.run_number }})
+          body: |
+            ГРАММ — Телеграм без границ.
+            - Реальный MTProto через GramJS
+            - Авто-подбор прокси
+            - Мод-меню, 100+ фич, 5 тем
+            - Фон профиля для пользователей ГРАММ
+          files: android/app/build/outputs/apk/debug/app-debug.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

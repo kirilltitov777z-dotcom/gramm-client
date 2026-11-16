@@ -1,0 +1,55 @@
+name: 🖼 Publish profile banner
+
+on:
+  repository_dispatch:
+    types: [publish-banner]
+  workflow_dispatch:
+    inputs:
+      id:
+        description: 'Короткий id баннера (из маркера ⟦g:id⟧)'
+        required: true
+      image:
+        description: 'URL картинки'
+        required: true
+      caption:
+        description: 'Подпись'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: ✍️ Update banners.json
+        env:
+          BANNER_ID: ${{ github.event.client_payload.id || inputs.id }}
+          BANNER_IMAGE: ${{ github.event.client_payload.image || inputs.image }}
+          BANNER_CAPTION: ${{ github.event.client_payload.caption || inputs.caption }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          path = '.github/registry/banners.json'
+          with open(path) as f:
+              data = json.load(f)
+          data[os.environ['BANNER_ID']] = {
+              "image": os.environ['BANNER_IMAGE'],
+              "caption": os.environ.get('BANNER_CAPTION', ''),
+              "v": 1,
+          }
+          with open(path, 'w') as f:
+              json.dump(data, f, ensure_ascii=False, indent=2)
+              f.write('\n')
+          PY
+
+      - name: 💾 Commit
+        run: |
+          git config user.name "gramm-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add .github/registry/banners.json
+          git diff --staged --quiet || git commit -m "banner: update registry"
+          git push
